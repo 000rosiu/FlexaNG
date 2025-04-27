@@ -58,7 +58,7 @@ FlexaNG collects a wide range of system information, including but not limited t
    - Check "Allow to read web browsers data" to collect browser profiles information
    - Check "Make TREE of entire C: drive" to generate a directory structure map
 3. **Click "Proceed"**: The application will begin collecting information
-4. **View Results**: All collected data is saved to a folder on your desktop named "FlexaNG_logs_[ComputerName]_[DateTime]"
+4. **View Results**: All collected data is saved to a folder in current application directory named "FlexaNG_logs_[ComputerName]_[DateTime]"
 
 ## 🔒 Privacy and Security
 
