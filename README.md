@@ -85,5 +85,5 @@ Give a ⭐️ if this project helped you!
 
 - **Platform**: Windows with installed .NET Framework (min. 4.7.2)
 - **Frameworks**: .NET C#
-- **Dependencies**: Requires 7z in the application directory
+- **Dependencies**: Requires 7z.exe, 7z.dll and flexa-ascii.dat file in the application directory
 - **Output Format**: Plain text log files (if browser information grabbing feature enabled: entire profile folders)
