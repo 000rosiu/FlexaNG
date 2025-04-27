@@ -52,7 +52,7 @@ FlexaNG collects a wide range of system information, including but not limited t
 
 ## 📋 Usage
 
-1. **Launch the Application**: Run FlexaNG.exe
+1. **Launch the Application with administrator privileges**: Run FlexaNG.exe
 2. **Configure Options**:
    - Check "Compress the log folder into a ZIP file" to create a compressed archive
    - Check "Allow to read web browsers data" to collect browser profiles information
