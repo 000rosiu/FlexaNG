@@ -3,16 +3,15 @@
   "WorkspaceRootPath": "C:\\Users\\000rosiu\\source\\repos\\FlexaNG\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{CA8AF6C7-6918-4D8D-963C-572A4A9DEF03}|FlexaNG\\FlexaNG.csproj|C:\\Users\\000rosiu\\source\\repos\\FlexaNG\\flexang\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "AbsoluteMoniker": "D:0:0:{CA8AF6C7-6918-4D8D-963C-572A4A9DEF03}|FlexaNG\\FlexaNG.csproj|c:\\users\\000rosiu\\source\\repos\\flexang\\flexang\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
       "RelativeMoniker": "D:0:0:{CA8AF6C7-6918-4D8D-963C-572A4A9DEF03}|FlexaNG\\FlexaNG.csproj|solutionrelative:flexang\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{CA8AF6C7-6918-4D8D-963C-572A4A9DEF03}|FlexaNG\\FlexaNG.csproj|c:\\users\\000rosiu\\source\\repos\\flexang\\flexang\\app.config||{FA3CD31E-987B-443A-9B81-186104E8DAC1}",
-      "RelativeMoniker": "D:0:0:{CA8AF6C7-6918-4D8D-963C-572A4A9DEF03}|FlexaNG\\FlexaNG.csproj|solutionrelative:flexang\\app.config||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{CA8AF6C7-6918-4D8D-963C-572A4A9DEF03}|FlexaNG\\FlexaNG.csproj|C:\\Users\\000rosiu\\source\\repos\\FlexaNG\\flexang\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{CA8AF6C7-6918-4D8D-963C-572A4A9DEF03}|FlexaNG\\FlexaNG.csproj|solutionrelative:flexang\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{00000000-0000-0000-0000-000000000000}|\u003CSolution\u003E|FlexaNG||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
     }
   ],
   "DocumentGroupContainers": [
@@ -30,26 +29,24 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "App.config",
-              "DocumentMoniker": "C:\\Users\\000rosiu\\source\\repos\\FlexaNG\\FlexaNG\\App.config",
-              "RelativeDocumentMoniker": "FlexaNG\\App.config",
-              "ToolTip": "C:\\Users\\000rosiu\\source\\repos\\FlexaNG\\FlexaNG\\App.config",
-              "RelativeToolTip": "FlexaNG\\App.config",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAQAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000601|",
-              "WhenOpened": "2025-04-29T15:08:34.168Z",
-              "EditorCaption": ""
+              "DocumentIndex": 2,
+              "Title": "FlexaNG",
+              "DocumentMoniker": "C:\\Users\\000rosiu\\source\\repos\\FlexaNG\\FlexaNG\\FlexaNG.csproj",
+              "RelativeDocumentMoniker": "FlexaNG\\FlexaNG.csproj",
+              "ToolTip": "C:\\Users\\000rosiu\\source\\repos\\FlexaNG\\FlexaNG\\FlexaNG.csproj",
+              "RelativeToolTip": "FlexaNG\\FlexaNG.csproj",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-04-29T18:31:36.531Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 1,
               "Title": "Form1.cs",
               "DocumentMoniker": "C:\\Users\\000rosiu\\source\\repos\\FlexaNG\\FlexaNG\\Form1.cs",
               "RelativeDocumentMoniker": "FlexaNG\\Form1.cs",
               "ToolTip": "C:\\Users\\000rosiu\\source\\repos\\FlexaNG\\FlexaNG\\Form1.cs",
               "RelativeToolTip": "FlexaNG\\Form1.cs",
-              "ViewState": "AgIAACIAAAAAAAAAAADwv0EAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAMQBAAAAAAAAAAAqwBQCAAA5AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-04-29T14:40:15.729Z",
               "EditorCaption": ""

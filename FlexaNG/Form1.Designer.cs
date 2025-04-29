@@ -36,9 +36,9 @@
             this.check_makezip = new System.Windows.Forms.CheckBox();
             this.btn_proceed = new System.Windows.Forms.Button();
             this.lb_version = new System.Windows.Forms.Label();
-            this.lbl_copyright = new System.Windows.Forms.Label();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.check_tree = new System.Windows.Forms.CheckBox();
+            this.lb_current = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -49,7 +49,7 @@
             this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Top;
             this.pictureBox1.Location = new System.Drawing.Point(0, 0);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(359, 71);
+            this.pictureBox1.Size = new System.Drawing.Size(403, 71);
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
             // 
@@ -88,9 +88,9 @@
             // 
             this.btn_proceed.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.btn_proceed.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.btn_proceed.Location = new System.Drawing.Point(0, 212);
+            this.btn_proceed.Location = new System.Drawing.Point(0, 236);
             this.btn_proceed.Name = "btn_proceed";
-            this.btn_proceed.Size = new System.Drawing.Size(359, 55);
+            this.btn_proceed.Size = new System.Drawing.Size(403, 55);
             this.btn_proceed.TabIndex = 4;
             this.btn_proceed.Text = "Proceed";
             this.btn_proceed.UseVisualStyleBackColor = true;
@@ -99,26 +99,17 @@
             // lb_version
             // 
             this.lb_version.AutoSize = true;
-            this.lb_version.Location = new System.Drawing.Point(272, 191);
+            this.lb_version.Location = new System.Drawing.Point(316, 220);
             this.lb_version.Name = "lb_version";
-            this.lb_version.Size = new System.Drawing.Size(75, 13);
+            this.lb_version.Size = new System.Drawing.Size(81, 13);
             this.lb_version.TabIndex = 5;
-            this.lb_version.Text = "FlexaNG v.0.1";
-            // 
-            // lbl_copyright
-            // 
-            this.lbl_copyright.AutoSize = true;
-            this.lbl_copyright.Location = new System.Drawing.Point(12, 191);
-            this.lbl_copyright.Name = "lbl_copyright";
-            this.lbl_copyright.Size = new System.Drawing.Size(127, 13);
-            this.lbl_copyright.TabIndex = 6;
-            this.lbl_copyright.Text = "©Verti-IML (IML Systems)";
+            this.lb_version.Text = "FlexaNG v.0.2a";
             // 
             // progressBar1
             // 
             this.progressBar1.Location = new System.Drawing.Point(12, 162);
             this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(335, 23);
+            this.progressBar1.Size = new System.Drawing.Size(379, 23);
             this.progressBar1.TabIndex = 7;
             // 
             // check_tree
@@ -131,14 +122,24 @@
             this.check_tree.Text = "Make TREE of entire C: drive";
             this.check_tree.UseVisualStyleBackColor = true;
             // 
+            // lb_current
+            // 
+            this.lb_current.AutoSize = true;
+            this.lb_current.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.lb_current.Location = new System.Drawing.Point(12, 188);
+            this.lb_current.Name = "lb_current";
+            this.lb_current.Size = new System.Drawing.Size(14, 13);
+            this.lb_current.TabIndex = 9;
+            this.lb_current.Text = "0";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(359, 267);
+            this.ClientSize = new System.Drawing.Size(403, 291);
+            this.Controls.Add(this.lb_current);
             this.Controls.Add(this.check_tree);
             this.Controls.Add(this.progressBar1);
-            this.Controls.Add(this.lbl_copyright);
             this.Controls.Add(this.lb_version);
             this.Controls.Add(this.btn_proceed);
             this.Controls.Add(this.check_makezip);
@@ -150,7 +151,7 @@
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "Form1";
-            this.Text = "FlexaNG v0.1";
+            this.Text = "FlexaNG v0.2a";
             this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
@@ -166,9 +167,9 @@
         private System.Windows.Forms.CheckBox check_makezip;
         private System.Windows.Forms.Button btn_proceed;
         private System.Windows.Forms.Label lb_version;
-        private System.Windows.Forms.Label lbl_copyright;
         private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.CheckBox check_tree;
+        private System.Windows.Forms.Label lb_current;
     }
 }
 

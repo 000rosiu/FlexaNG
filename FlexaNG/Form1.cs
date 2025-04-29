@@ -27,6 +27,20 @@ namespace FlexaNG
         {
         }
 
+        private void UpdateStatus(string message)
+        {
+            if (lb_current.InvokeRequired)
+            {
+                lb_current.Invoke(new Action(() => {
+                    lb_current.Text = message;
+                }));
+            }
+            else
+            {
+                lb_current.Text = message;
+            }
+        }
+
         private async void btn_proceed_Click(object sender, EventArgs e)
         {
             btn_proceed.Enabled = false;
@@ -167,127 +181,158 @@ namespace FlexaNG
             try
             {
                 // Version info
+                UpdateStatus("Collecting system information...");
                 RunAndSaveCommand("cmd.exe", "/c ver", "ver.log");
                 UpdateProgress();
 
                 // Volume info
+                UpdateStatus("Collecting volume information...");
                 RunAndSaveCommand("cmd.exe", "/c vol", "vol.log");
                 UpdateProgress();
 
                 // IP configuration
+                UpdateStatus("Collecting IP configuration...");
                 RunAndSaveCommand("ipconfig", "/all", "ipconfig.log");
                 RunAndSaveCommand("ipconfig", "/displaydns", "ipconfig_dns.log");
                 UpdateProgress();
 
                 // User info
+                UpdateStatus("Collecting user information...");
                 RunAndSaveCommand("net", "user", "net-user.log");
                 UpdateProgress();
 
                 // File associations
+                UpdateStatus("Collecting file associations...");
                 RunAndSaveCommand("cmd.exe", "/c assoc", "assoc.log");
                 UpdateProgress();
 
                 // Environment variables
+                UpdateStatus("Collecting environment variables...");
                 RunAndSaveCommand("cmd.exe", "/c set", "set.log");
                 UpdateProgress();
 
                 // Compression info
+                UpdateStatus("Collecting compression information...");
                 RunAndSaveCommand("compact", "", "compact.log");
                 UpdateProgress();
 
                 // File types
+                UpdateStatus("Collecting file types...");
                 RunAndSaveCommand("cmd.exe", "/c ftype", "ftype.log");
                 UpdateProgress();
 
                 // Network connections
+                UpdateStatus("Collecting network connections...");
                 RunAndSaveCommand("netstat", "-an", "netstat-an.log");
                 UpdateProgress();
 
                 // Power configuration
+                UpdateStatus("Collecting power configuration...");
                 RunAndSaveCommand("powercfg", "/a", "powercfg.log");
                 UpdateProgress();
 
                 // Process list
+                UpdateStatus("Collecting tasklist...");
                 RunAndSaveCommand("tasklist", "", "tasklist.log");
                 UpdateProgress();
 
                 // BIOS info
+                UpdateStatus("Collecting BIOS information...");
                 RunAndSaveCommand("wmic", "bios get /all", "bios.log");
                 UpdateProgress();
 
                 // CPU info
+                UpdateStatus("Collecting CPU information...");
                 RunAndSaveCommand("wmic", "cpu get /all", "cpu.log");
                 UpdateProgress();
 
                 // System info
+                UpdateStatus("Collecting system information...");
                 RunAndSaveCommand("systeminfo", "", "systeminfo.log");
                 UpdateProgress();
 
                 // Timezone info
+                UpdateStatus("Collecting timezone information...");
                 RunAndSaveCommand("wmic", "timezone get /all", "timezone.log");
                 UpdateProgress();
 
                 // Graphics card info
+                UpdateStatus("Collecting graphics card information...");
                 RunAndSaveCommand("wmic", "path win32_videocontroller get /all", "graphics.log");
                 UpdateProgress();
 
                 // RAM info
+                UpdateStatus("Collecting RAM information...");
                 RunAndSaveCommand("wmic", "memorychip get /all", "ram.log");
                 UpdateProgress();
 
                 // Disk info
+                UpdateStatus("Collecting disk information...");
                 RunAndSaveCommand("wmic", "diskdrive get /all", "disk.log");
                 UpdateProgress();
 
                 // OS info
+                UpdateStatus("Collecting OS information...");
                 RunAndSaveCommand("wmic", "os get /all", "os.log");
                 UpdateProgress();
 
                 // Information about installed programs
+                UpdateStatus("Collecting installed software information...");
                 RunAndSaveCommand("wmic", "product get name,version", "installed_software.log");
                 UpdateProgress();
 
                 // Information about system services
+                UpdateStatus("Collecting system services information...");
                 RunAndSaveCommand("sc", "query", "services.log");
                 UpdateProgress();
 
                 // Information about drivers
+                UpdateStatus("Collecting driver information...");
                 RunAndSaveCommand("driverquery", "/v", "drivers.log");
                 UpdateProgress();
 
                 // Information about disk partitions
+                UpdateStatus("Collecting disk partition information...");
                 RunAndSaveCommand("wmic", "logicaldisk get caption,description,providername,volumename,size,freespace", "partitions.log");
                 UpdateProgress();
 
                 // Information about network interfaces
+                UpdateStatus("Collecting network interface information...");
                 RunAndSaveCommand("wmic", "nic get AdapterType,Name,Installed,MACAddress,NetConnectionID,Speed", "network_adapters.log");
                 UpdateProgress();
 
                 // Information about services launched
+                UpdateStatus("Collecting running services information...");
                 RunAndSaveCommand("net", "start", "running_services.log");
                 UpdateProgress();
 
                 // Information about user groups
+                UpdateStatus("Collecting user groups information...");
                 RunAndSaveCommand("net", "localgroup", "user_groups.log");
                 UpdateProgress();
 
                 // Information about user accounts
+                UpdateStatus("Collecting user accounts information...");
                 RunAndSaveCommand("wmic", "useraccount get name,sid,status,passwordrequired", "user_accounts.log");
                 UpdateProgress();
 
                 // Information about installed updates
+                UpdateStatus("Collecting installed updates information...");
                 RunAndSaveCommand("wmic", "qfe get hotfixid,description,installedby,installedon", "installed_updates.log");
                 UpdateProgress();
 
                 // Information on scheduled tasks
+                UpdateStatus("Collecting scheduled tasks information...");
                 RunAndSaveCommand("schtasks", "/query /fo LIST /v", "scheduled_tasks.log");
                 UpdateProgress();
 
                 // Information about PnP devices
+                UpdateStatus("Collecting PnP devices information...");
                 RunAndSaveCommand("wmic", "path Win32_PnPEntity get Caption,DeviceID,Manufacturer,PNPDeviceID", "pnp_devices.log");
                 UpdateProgress();
 
                 // Information about firewall configuration
+                UpdateStatus("Collecting firewall configuration...");
                 RunAndSaveCommand("netsh", "advfirewall show allprofiles", "firewall.log");
                 UpdateProgress();
 
@@ -485,7 +530,7 @@ namespace FlexaNG
             catch (Exception ex)
             {
                 SaveLogWithHeader($"Error during data collection: {ex.Message}",
-                    Path.Combine(outputFolderPath, "error.log"));
+                    Path.Combine(outputFolderPath, "ERROR.log"));
             }
         }
 
