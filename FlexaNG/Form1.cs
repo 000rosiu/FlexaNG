@@ -473,5 +473,10 @@ namespace FlexaNG
                     Path.Combine(outputFolderPath, "error.log"));
             }
         }
+
+        private void check_browsers_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }

@@ -39,7 +39,6 @@
             this.lbl_copyright = new System.Windows.Forms.Label();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.check_tree = new System.Windows.Forms.CheckBox();
-            this.btn_proceed.Click += new System.EventHandler(this.btn_proceed_Click);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -73,6 +72,7 @@
             this.check_browsers.TabIndex = 2;
             this.check_browsers.Text = "Allow to read web browsers data (including passwords, history etc.)";
             this.check_browsers.UseVisualStyleBackColor = true;
+            this.check_browsers.CheckedChanged += new System.EventHandler(this.check_browsers_CheckedChanged);
             // 
             // check_makezip
             // 
@@ -94,6 +94,7 @@
             this.btn_proceed.TabIndex = 4;
             this.btn_proceed.Text = "Proceed";
             this.btn_proceed.UseVisualStyleBackColor = true;
+            this.btn_proceed.Click += new System.EventHandler(this.btn_proceed_Click);
             // 
             // lb_version
             // 
