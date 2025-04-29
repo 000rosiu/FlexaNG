@@ -14,6 +14,9 @@ namespace FlexaNG
 {
     public partial class Form1 : Form
     {
+        private bool errorsOccurred = false;
+        private string errorFilePath = "";
+
         public Form1()
         {
             InitializeComponent();
@@ -26,17 +29,17 @@ namespace FlexaNG
 
         private async void btn_proceed_Click(object sender, EventArgs e)
         {
-
             btn_proceed.Enabled = false;
-
             progressBar1.Value = 0;
+
+            errorsOccurred = false;
+            errorFilePath = "";
 
             string computerName = Environment.MachineName;
             string currentDate = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
             string outputFolderPath = Path.Combine(
                 Application.StartupPath,
                 $"FlexaNG_logs_{computerName}_{currentDate}");
-
             Directory.CreateDirectory(outputFolderPath);
 
             var progress = new Progress<int>(percent => {
@@ -47,9 +50,20 @@ namespace FlexaNG
 
             btn_proceed.Enabled = true;
 
-            MessageBox.Show("Logs generated successfully!", "FlexaNG",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            if (errorsOccurred && !string.IsNullOrEmpty(errorFilePath))
+            {
+                MessageBox.Show(
+                    $"Log generation completed, but some errors occurred during the process.\nSee error.log for details.",
+                    "FlexaNG",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            else
+            {
+                MessageBox.Show("Logs generated successfully!", "FlexaNG",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
+
 
         private string GetFileHeader()
         {
@@ -144,8 +158,9 @@ namespace FlexaNG
                 }
                 catch (Exception ex)
                 {
-                    SaveLogWithHeader($"Error executing command {command} {arguments}: {ex.Message}",
-                        Path.Combine(outputFolderPath, outputFileName));
+                    errorsOccurred = true;
+                    errorFilePath = Path.Combine(outputFolderPath, "error.log");
+                    SaveLogWithHeader($"Error executing command {command} {arguments}: {ex.Message}", errorFilePath);
                 }
             }
 

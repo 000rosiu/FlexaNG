@@ -50,7 +50,7 @@
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>uee3Cn/RyzdnSYI5JvMqoaVGxIxXJxFx/ffcnuheBcE=</dsig:DigestValue>
+        <dsig:DigestValue>Q0Fd9Pntr108wqWoWqnwJDqMHGNMotFjbjrenM9Tx4Y=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
@@ -72,7 +72,7 @@
       <dsig:DigestValue>4so+wWiunAtBFc1P4iAUXqmy3Etvx512XpH0FbNNAN4=</dsig:DigestValue>
     </hash>
   </file>
-  <file name="FlexaNG.exe.config" size="176" />
+  <file name="FlexaNG.exe.config" size="189" />
   <file name="x.ico" size="200702">
     <hash>
       <dsig:Transforms>

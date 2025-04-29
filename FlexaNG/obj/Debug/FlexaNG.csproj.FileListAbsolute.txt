@@ -1,0 +1,15 @@
+C:\Users\000rosiu\source\repos\FlexaNG\FlexaNG\bin\Debug\FlexaNG.exe.config
+C:\Users\000rosiu\source\repos\FlexaNG\FlexaNG\bin\Debug\FlexaNG.exe.manifest
+C:\Users\000rosiu\source\repos\FlexaNG\FlexaNG\bin\Debug\FlexaNG.application
+C:\Users\000rosiu\source\repos\FlexaNG\FlexaNG\bin\Debug\FlexaNG.exe
+C:\Users\000rosiu\source\repos\FlexaNG\FlexaNG\bin\Debug\FlexaNG.pdb
+C:\Users\000rosiu\source\repos\FlexaNG\FlexaNG\obj\Debug\FlexaNG.csproj.AssemblyReference.cache
+C:\Users\000rosiu\source\repos\FlexaNG\FlexaNG\obj\Debug\FlexaNG.Form1.resources
+C:\Users\000rosiu\source\repos\FlexaNG\FlexaNG\obj\Debug\FlexaNG.Properties.Resources.resources
+C:\Users\000rosiu\source\repos\FlexaNG\FlexaNG\obj\Debug\FlexaNG.csproj.GenerateResource.cache
+C:\Users\000rosiu\source\repos\FlexaNG\FlexaNG\obj\Debug\FlexaNG.csproj.CoreCompileInputs.cache
+C:\Users\000rosiu\source\repos\FlexaNG\FlexaNG\obj\Debug\FlexaNG.TrustInfo.xml
+C:\Users\000rosiu\source\repos\FlexaNG\FlexaNG\obj\Debug\FlexaNG.exe.manifest
+C:\Users\000rosiu\source\repos\FlexaNG\FlexaNG\obj\Debug\FlexaNG.application
+C:\Users\000rosiu\source\repos\FlexaNG\FlexaNG\obj\Debug\FlexaNG.exe
+C:\Users\000rosiu\source\repos\FlexaNG\FlexaNG\obj\Debug\FlexaNG.pdb
