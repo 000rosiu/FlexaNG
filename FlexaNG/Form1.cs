@@ -14,6 +14,18 @@ namespace FlexaNG
 {
     public partial class Form1 : Form
     {
+        // Constants
+        private const int TOTAL_TASKS = 40;
+        private const string ASCII_ART_FILE = "flexa-ascii.dat";
+        private const string SEVEN_ZIP_EXE = "7z.exe";
+        private const string ERROR_LOG_FILE = "error.log";
+        private const string COMPRESSION_ERROR_LOG = "compression_error.log";
+
+        // Browser profile directories
+        private const string CHROME_PROFILE_PATH = @"Google\Chrome\User Data\Default";
+        private const string FIREFOX_PROFILE_PATH = @"Mozilla\Firefox\Profiles";
+        private const string EDGE_PROFILE_PATH = @"Microsoft\Edge\User Data\Default";
+
         private bool errorsOccurred = false;
         private string errorFilePath = "";
 
@@ -29,10 +41,14 @@ namespace FlexaNG
 
         private void UpdateStatus(string message)
         {
+            if (lb_current == null || lb_current.IsDisposed)
+                return;
+
             if (lb_current.InvokeRequired)
             {
                 lb_current.Invoke(new Action(() => {
-                    lb_current.Text = message;
+                    if (!lb_current.IsDisposed)
+                        lb_current.Text = message;
                 }));
             }
             else
@@ -41,9 +57,36 @@ namespace FlexaNG
             }
         }
 
+        private bool IsValidPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return false;
+
+            try
+            {
+                // Check for invalid characters
+                Path.GetFullPath(path);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool IsValidCommand(string command)
+        {
+            if (string.IsNullOrWhiteSpace(command))
+                return false;
+
+            // Basic validation - command should not contain dangerous characters
+            return !command.Contains("..") && !command.Contains("/") && !command.Contains("\\");
+        }
+
         private async void btn_proceed_Click(object sender, EventArgs e)
         {
-            btn_proceed.Enabled = false;
+            if (btn_proceed != null && !btn_proceed.IsDisposed)
+                btn_proceed.Enabled = false;
             progressBar1.Value = 0;
 
             errorsOccurred = false;
@@ -54,15 +97,50 @@ namespace FlexaNG
             string outputFolderPath = Path.Combine(
                 Application.StartupPath,
                 $"FlexaNG_logs_{computerName}_{currentDate}");
-            Directory.CreateDirectory(outputFolderPath);
+
+            if (!IsValidPath(outputFolderPath))
+            {
+                MessageBox.Show("Invalid output folder path. Please check the application directory.",
+                    "FlexaNG", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (btn_proceed != null && !btn_proceed.IsDisposed)
+                    btn_proceed.Enabled = true;
+                return;
+            }
+
+            try
+            {
+                Directory.CreateDirectory(outputFolderPath);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Cannot create output folder: {ex.Message}",
+                    "FlexaNG", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (btn_proceed != null && !btn_proceed.IsDisposed)
+                    btn_proceed.Enabled = true;
+                return;
+            }
 
             var progress = new Progress<int>(percent => {
-                progressBar1.Value = percent;
+                if (progressBar1 != null && !progressBar1.IsDisposed)
+                {
+                    if (progressBar1.InvokeRequired)
+                    {
+                        progressBar1.Invoke(new Action(() => {
+                            if (!progressBar1.IsDisposed)
+                                progressBar1.Value = Math.Min(percent, 100);
+                        }));
+                    }
+                    else
+                    {
+                        progressBar1.Value = Math.Min(percent, 100);
+                    }
+                }
             });
 
             await Task.Run(() => CollectData(outputFolderPath, progress));
 
-            btn_proceed.Enabled = true;
+            if (btn_proceed != null && !btn_proceed.IsDisposed)
+                btn_proceed.Enabled = true;
 
             if (errorsOccurred && !string.IsNullOrEmpty(errorFilePath))
             {
@@ -83,7 +161,7 @@ namespace FlexaNG
         {
             StringBuilder header = new StringBuilder();
 
-            string asciiArtPath = Path.Combine(Application.StartupPath, "flexa-ascii.dat");
+            string asciiArtPath = Path.Combine(Application.StartupPath, ASCII_ART_FILE);
             if (File.Exists(asciiArtPath))
             {
                 header.AppendLine(File.ReadAllText(asciiArtPath));
@@ -94,7 +172,7 @@ namespace FlexaNG
             }
 
             header.AppendLine("=======================================");
-            header.AppendLine("LOG GENERATED BY FlexaNG v.0.1");
+            header.AppendLine("LOG GENERATED BY FlexaNG v.0.3");
             header.AppendLine("https://github.com/000rosiu/FlexaNG");
             header.AppendLine("=======================================");
             header.AppendLine();
@@ -123,8 +201,10 @@ namespace FlexaNG
                     string destFile = Path.Combine(destDir, Path.GetFileName(file));
                     File.Copy(file, destFile, true);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    errorsOccurred = true;
+                    SaveLogWithHeader($"Error copying file {file}: {ex.Message}", errorFilePath);
                 }
             }
 
@@ -135,15 +215,17 @@ namespace FlexaNG
                     string destSubDir = Path.Combine(destDir, Path.GetFileName(dir));
                     CopyDirectory(dir, destSubDir);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    errorsOccurred = true;
+                    SaveLogWithHeader($"Error copying directory {dir}: {ex.Message}", errorFilePath);
                 }
             }
         }
 
         private void CollectData(string outputFolderPath, IProgress<int> progress)
         {
-            int totalTasks = 40; 
+            int totalTasks = TOTAL_TASKS; 
             int completedTasks = 0;
 
             void UpdateProgress()
@@ -155,6 +237,23 @@ namespace FlexaNG
 
             void RunAndSaveCommand(string command, string arguments, string outputFileName)
             {
+                // Validate inputs
+                if (!IsValidCommand(command))
+                {
+                    errorsOccurred = true;
+                    errorFilePath = Path.Combine(outputFolderPath, ERROR_LOG_FILE);
+                    SaveLogWithHeader($"Invalid command: {command}", errorFilePath);
+                    return;
+                }
+
+                if (!IsValidPath(outputFolderPath))
+                {
+                    errorsOccurred = true;
+                    errorFilePath = Path.Combine(outputFolderPath, ERROR_LOG_FILE);
+                    SaveLogWithHeader($"Invalid output path: {outputFolderPath}", errorFilePath);
+                    return;
+                }
+
                 try
                 {
                     Process process = new Process();
@@ -173,7 +272,7 @@ namespace FlexaNG
                 catch (Exception ex)
                 {
                     errorsOccurred = true;
-                    errorFilePath = Path.Combine(outputFolderPath, "error.log");
+                    errorFilePath = Path.Combine(outputFolderPath, ERROR_LOG_FILE);
                     SaveLogWithHeader($"Error executing command {command} {arguments}: {ex.Message}", errorFilePath);
                 }
             }
@@ -370,7 +469,7 @@ namespace FlexaNG
                     // Chrome
                     string chromePath = Path.Combine(
                         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                        @"Google\Chrome\User Data\Default");
+                        CHROME_PROFILE_PATH);
 
                     if (Directory.Exists(chromePath))
                     {
@@ -382,7 +481,6 @@ namespace FlexaNG
 
                         try
                         {
-
                             string[] filesToCopy = {
                                 "Bookmarks", "Cookies", "History", "Login Data", "Preferences",
                                 "Web Data", "Favicons", "Shortcuts"
@@ -414,7 +512,7 @@ namespace FlexaNG
                     // Firefox
                     string firefoxPath = Path.Combine(
                         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                        @"Mozilla\Firefox\Profiles");
+                        FIREFOX_PROFILE_PATH);
 
                     if (Directory.Exists(firefoxPath))
                     {
@@ -458,7 +556,7 @@ namespace FlexaNG
                     // Edge
                     string edgePath = Path.Combine(
                         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                        @"Microsoft\Edge\User Data\Default");
+                        EDGE_PROFILE_PATH);
 
                     if (Directory.Exists(edgePath))
                     {
@@ -505,7 +603,7 @@ namespace FlexaNG
                 // Compress folder if checkbox is checked
                 if (check_makezip.Checked)
                 {
-                    string sevenZipPath = Path.Combine(Application.StartupPath, "7z.exe");
+                    string sevenZipPath = Path.Combine(Application.StartupPath, SEVEN_ZIP_EXE);
 
                     if (File.Exists(sevenZipPath))
                     {
@@ -522,7 +620,7 @@ namespace FlexaNG
                     else
                     {
                         SaveLogWithHeader("7z.exe not found in application directory. Compression was not performed.",
-                            Path.Combine(outputFolderPath, "compression_error.log"));
+                            Path.Combine(outputFolderPath, COMPRESSION_ERROR_LOG));
                     }
                 }
                 UpdateProgress();

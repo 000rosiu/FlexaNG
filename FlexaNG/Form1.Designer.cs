@@ -101,9 +101,9 @@
             this.lb_version.AutoSize = true;
             this.lb_version.Location = new System.Drawing.Point(316, 220);
             this.lb_version.Name = "lb_version";
-            this.lb_version.Size = new System.Drawing.Size(81, 13);
+            this.lb_version.Size = new System.Drawing.Size(75, 13);
             this.lb_version.TabIndex = 5;
-            this.lb_version.Text = "FlexaNG v.0.2a";
+            this.lb_version.Text = "FlexaNG v.0.3";
             // 
             // progressBar1
             // 
@@ -128,9 +128,9 @@
             this.lb_current.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
             this.lb_current.Location = new System.Drawing.Point(12, 188);
             this.lb_current.Name = "lb_current";
-            this.lb_current.Size = new System.Drawing.Size(14, 13);
+            this.lb_current.Size = new System.Drawing.Size(62, 13);
             this.lb_current.TabIndex = 9;
-            this.lb_current.Text = "0";
+            this.lb_current.Text = "Waiting...";
             // 
             // Form1
             // 
@@ -151,7 +151,7 @@
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "Form1";
-            this.Text = "FlexaNG v0.2a";
+            this.Text = "FlexaNG v0.3";
             this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);

@@ -1,0 +1,45 @@
+# Build outputs
+**/bin/
+**/obj/
+**/app.publish/
+
+# User-specific files
+*.user
+*.suo
+*.cache
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and sensitive data
+*.log
+**/FlexaNG_logs_*/
+**/browser_data/
+*.zip
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# Backup files
+*.bak
+*.backup
+
+# NuGet packages
+packages/
+*.nupkg
+
+# Test results
+TestResults/
+
+# Windows executables and DLLs (but keep 7z.dll and 7z.exe in source)
+!**/7z.dll
+!**/7z.exe
