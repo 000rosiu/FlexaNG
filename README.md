@@ -1,7 +1,5 @@
 # FlexaNG
 
-![FlexaNG Logo](flexa_logo.png)
-
 ## Next generation of Flexa, incredible easy tool for device information grabbing
 
 FlexaNG is an open-source diagnostic utility designed to collect extensive system information for troubleshooting, analysis, and educational purposes. The application provides a simple yet powerful interface to gather detailed hardware and software information from Windows systems.
