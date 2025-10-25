@@ -46,7 +46,7 @@ FlexaNG collects a wide range of system information, including but not limited t
 
 ## 📋 Screenshots
 
-![flexa_screen](https://github.com/user-attachments/assets/f0201ca1-fb4f-4d41-8333-25926abb7283)
+![flexa_screen](https://raw.githubusercontent.com/000rosiu/FlexaNG/refs/heads/main/screenshot.png)
 
 ## 📋 Usage
 
