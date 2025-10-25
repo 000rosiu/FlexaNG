@@ -9,9 +9,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("FlexaNG")]
 [assembly: AssemblyDescription("FlexaNG - Next generation of flexa, incredible easy tool for device information grabbing")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Verti-IML (IML Sytems)")]
+[assembly: AssemblyCompany("VIMLworks")]
 [assembly: AssemblyProduct("FlexaNG")]
-[assembly: AssemblyCopyright("© 000rosiu (Verti-IML)  2025")]
+[assembly: AssemblyCopyright("© 000rosiu (VIMLworks)  2025")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

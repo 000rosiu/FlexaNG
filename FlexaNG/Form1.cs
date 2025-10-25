@@ -5,8 +5,10 @@ using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -33,6 +35,9 @@ namespace FlexaNG
         {
             InitializeComponent();
             this.btn_proceed.Click += new System.EventHandler(this.btn_proceed_Click);
+            
+            // Custom progress bar styling
+            progressBar1.ForeColor = Color.FromArgb(100, 87, 193);
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -79,33 +84,49 @@ namespace FlexaNG
             if (string.IsNullOrWhiteSpace(command))
                 return false;
 
-            // Basic validation - command should not contain dangerous characters
-            return !command.Contains("..") && !command.Contains("/") && !command.Contains("\\");
+            // Allow only specific commands or .exe files without path traversal
+            string cmdLower = command.ToLower();
+            
+            // Check for path traversal attempts
+            if (command.Contains(".."))
+                return false;
+            
+            // Allow commands without path separators, or standard Windows commands
+            if (!command.Contains("\\") && !command.Contains("/"))
+                return true;
+                
+            // Allow full paths only if they don't contain suspicious patterns
+            return !command.Contains("..");
         }
 
         private async void btn_proceed_Click(object sender, EventArgs e)
         {
-            if (btn_proceed != null && !btn_proceed.IsDisposed)
-                btn_proceed.Enabled = false;
+            // Disable button during operation
+            btn_proceed.Enabled = false;
             progressBar1.Value = 0;
-
             errorsOccurred = false;
-            errorFilePath = "";
 
+            // Warn about tree operation
+            if (check_tree.Checked)
+            {
+                var result = MessageBox.Show(
+                    "Warning: Generating a directory tree of the entire C: drive can take a very long time.\n\nContinue?",
+                    "FlexaNG - Warning",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+
+                if (result == DialogResult.No)
+                {
+                    check_tree.Checked = false;
+                }
+            }
+
+            // Prepare output folder
             string computerName = Environment.MachineName;
             string currentDate = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
             string outputFolderPath = Path.Combine(
                 Application.StartupPath,
                 $"FlexaNG_logs_{computerName}_{currentDate}");
-
-            if (!IsValidPath(outputFolderPath))
-            {
-                MessageBox.Show("Invalid output folder path. Please check the application directory.",
-                    "FlexaNG", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                if (btn_proceed != null && !btn_proceed.IsDisposed)
-                    btn_proceed.Enabled = true;
-                return;
-            }
 
             try
             {
@@ -113,46 +134,84 @@ namespace FlexaNG
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Cannot create output folder: {ex.Message}",
-                    "FlexaNG", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                if (btn_proceed != null && !btn_proceed.IsDisposed)
-                    btn_proceed.Enabled = true;
+                MessageBox.Show($"Cannot create output folder: {ex.Message}", "FlexaNG", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                btn_proceed.Enabled = true;
                 return;
             }
 
             var progress = new Progress<int>(percent => {
                 if (progressBar1 != null && !progressBar1.IsDisposed)
-                {
-                    if (progressBar1.InvokeRequired)
-                    {
-                        progressBar1.Invoke(new Action(() => {
-                            if (!progressBar1.IsDisposed)
-                                progressBar1.Value = Math.Min(percent, 100);
-                        }));
-                    }
-                    else
-                    {
-                        progressBar1.Value = Math.Min(percent, 100);
-                    }
-                }
+                    progressBar1.Value = Math.Min(percent, 100);
             });
 
-            await Task.Run(() => CollectData(outputFolderPath, progress));
+            // Run collection in background
+            await Task.Run(() => CollectData(
+                outputFolderPath,
+                progress,
+                check_tree.Checked,
+                check_browsers.Checked,
+                check_makezip.Checked));
 
-            if (btn_proceed != null && !btn_proceed.IsDisposed)
-                btn_proceed.Enabled = true;
+            // Re-enable button
+            btn_proceed.Enabled = true;
 
+            // Show results
             if (errorsOccurred && !string.IsNullOrEmpty(errorFilePath))
             {
+                string sizeInfo = GetFolderSizeInfo(outputFolderPath);
                 MessageBox.Show(
-                    $"Log generation completed, but some errors occurred during the process.\nSee error.log for details.",
+                    $"Logs generated with some errors.\n\n{sizeInfo}\n\nCheck error.log for details.",
                     "FlexaNG",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
             }
             else
             {
-                MessageBox.Show("Logs generated successfully!", "FlexaNG",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                string sizeInfo = GetFolderSizeInfo(outputFolderPath);
+                MessageBox.Show(
+                    $"Logs generated successfully!\n\n{sizeInfo}",
+                    "FlexaNG",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+        }
+
+        private string GetFolderSizeInfo(string folderPath)
+        {
+            try
+            {
+                if (!Directory.Exists(folderPath))
+                    return "Folder size: unknown";
+
+                long totalSize = 0;
+                int fileCount = 0;
+
+                var files = Directory.GetFiles(folderPath, "*.*", SearchOption.AllDirectories);
+                foreach (var file in files)
+                {
+                    try
+                    {
+                        totalSize += new FileInfo(file).Length;
+                        fileCount++;
+                    }
+                    catch { }
+                }
+
+                string sizeText;
+                if (totalSize < 1024)
+                    sizeText = $"{totalSize} B";
+                else if (totalSize < 1024 * 1024)
+                    sizeText = $"{totalSize / 1024.0:F2} KB";
+                else if (totalSize < 1024 * 1024 * 1024)
+                    sizeText = $"{totalSize / (1024.0 * 1024):F2} MB";
+                else
+                    sizeText = $"{totalSize / (1024.0 * 1024 * 1024):F2} GB";
+
+                return $"Total size: {sizeText}\nFiles: {fileCount}";
+            }
+            catch
+            {
+                return "Folder size: unknown";
             }
         }
 
@@ -172,7 +231,7 @@ namespace FlexaNG
             }
 
             header.AppendLine("=======================================");
-            header.AppendLine("LOG GENERATED BY FlexaNG v.0.3");
+            header.AppendLine("LOG GENERATED BY FlexaNG v.0.4");
             header.AppendLine("https://github.com/000rosiu/FlexaNG");
             header.AppendLine("=======================================");
             header.AppendLine();
@@ -188,6 +247,12 @@ namespace FlexaNG
 
         private void CopyDirectory(string sourceDir, string destDir)
         {
+            // Initialize errorFilePath if not set
+            if (string.IsNullOrEmpty(errorFilePath))
+            {
+                errorFilePath = Path.Combine(Path.GetDirectoryName(destDir) ?? "", ERROR_LOG_FILE);
+            }
+
             if (!Directory.Exists(destDir))
             {
                 Directory.CreateDirectory(destDir);
@@ -223,412 +288,425 @@ namespace FlexaNG
             }
         }
 
-        private void CollectData(string outputFolderPath, IProgress<int> progress)
+        private bool CopyFileWithRetry(string sourceFile, string destFile, int maxRetries = 3, int delayMs = 500)
         {
-            int totalTasks = TOTAL_TASKS; 
-            int completedTasks = 0;
-
-            void UpdateProgress()
+            for (int i = 0; i < maxRetries; i++)
             {
-                completedTasks++;
-                int progressValue = Math.Min((int)((float)completedTasks / totalTasks * 100), 100);
-                progress.Report(progressValue);
-            }
-
-            void RunAndSaveCommand(string command, string arguments, string outputFileName)
-            {
-                // Validate inputs
-                if (!IsValidCommand(command))
-                {
-                    errorsOccurred = true;
-                    errorFilePath = Path.Combine(outputFolderPath, ERROR_LOG_FILE);
-                    SaveLogWithHeader($"Invalid command: {command}", errorFilePath);
-                    return;
-                }
-
-                if (!IsValidPath(outputFolderPath))
-                {
-                    errorsOccurred = true;
-                    errorFilePath = Path.Combine(outputFolderPath, ERROR_LOG_FILE);
-                    SaveLogWithHeader($"Invalid output path: {outputFolderPath}", errorFilePath);
-                    return;
-                }
-
                 try
                 {
-                    Process process = new Process();
-                    process.StartInfo.FileName = command;
-                    process.StartInfo.Arguments = arguments;
-                    process.StartInfo.UseShellExecute = false;
-                    process.StartInfo.RedirectStandardOutput = true;
-                    process.StartInfo.CreateNoWindow = true;
-                    process.Start();
-
-                    string output = process.StandardOutput.ReadToEnd();
-                    process.WaitForExit();
-
-                    SaveLogWithHeader(output, Path.Combine(outputFolderPath, outputFileName));
+                    File.Copy(sourceFile, destFile, true);
+                    return true;
+                }
+                catch (IOException) when (i < maxRetries - 1)
+                {
+                    // File might be locked, wait and retry
+                    Thread.Sleep(delayMs);
                 }
                 catch (Exception ex)
                 {
                     errorsOccurred = true;
-                    errorFilePath = Path.Combine(outputFolderPath, ERROR_LOG_FILE);
-                    SaveLogWithHeader($"Error executing command {command} {arguments}: {ex.Message}", errorFilePath);
+                    if (!string.IsNullOrEmpty(errorFilePath))
+                    {
+                        SaveLogWithHeader($"Error copying file {sourceFile}: {ex.Message}", errorFilePath);
+                    }
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        private void CollectData(string outputFolderPath, IProgress<int> progress,
+            bool includeTree, bool includeBrowsers, bool includeZip)
+        {
+            errorFilePath = Path.Combine(outputFolderPath, ERROR_LOG_FILE);
+            
+            int totalTasks = 32;
+            if (includeTree) totalTasks++;
+            if (includeBrowsers) totalTasks++;
+            if (includeZip) totalTasks++;
+                
+            int completedTasks = 0;
+
+            void ReportProgress()
+            {
+                completedTasks++;
+                progress.Report(Math.Min((completedTasks * 100) / totalTasks, 100));
+            }
+
+            void Exec(string cmd, string args, string outFile)
+            {
+                try
+                {
+                    UpdateStatus($"Running: {cmd}");
+                    
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = cmd,
+                        Arguments = args,
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        CreateNoWindow = true
+                    };
+
+                    using (var proc = Process.Start(psi))
+                    {
+                        string output = proc.StandardOutput.ReadToEnd();
+                        string errors = proc.StandardError.ReadToEnd();
+                        proc.WaitForExit();
+
+                        if (!string.IsNullOrEmpty(errors))
+                        {
+                            output += "\n\n=== ERRORS ===\n" + errors;
+                            errorsOccurred = true;
+                        }
+
+                        SaveLogWithHeader(output, Path.Combine(outputFolderPath, outFile));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorsOccurred = true;
+                    string errorMsg = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Command failed:\n" +
+                                     $"  Command: {cmd}\n" +
+                                     $"  Arguments: {args}\n" +
+                                     $"  Output file: {outFile}\n" +
+                                     $"  Error: {ex.GetType().Name} - {ex.Message}\n" +
+                                     $"  Stack trace: {ex.StackTrace}\n" +
+                                     new string('-', 80);
+                    SaveLogWithHeader(errorMsg, errorFilePath);
+                    UpdateStatus($"Error: {cmd}");
                 }
             }
 
             try
             {
-                // Version info
-                UpdateStatus("Collecting system information...");
-                RunAndSaveCommand("cmd.exe", "/c ver", "ver.log");
-                UpdateProgress();
+                // System commands
+                Exec("cmd.exe", "/c ver", "ver.log"); ReportProgress();
+                Exec("cmd.exe", "/c vol", "vol.log"); ReportProgress();
+                Exec("ipconfig", "/all", "ipconfig.log");
+                Exec("ipconfig", "/displaydns", "ipconfig_dns.log"); ReportProgress();
+                Exec("net", "user", "net-user.log"); ReportProgress();
+                Exec("cmd.exe", "/c assoc", "assoc.log"); ReportProgress();
+                Exec("cmd.exe", "/c set", "set.log"); ReportProgress();
+                Exec("compact", "", "compact.log"); ReportProgress();
+                Exec("cmd.exe", "/c ftype", "ftype.log"); ReportProgress();
+                Exec("netstat", "-an", "netstat-an.log"); ReportProgress();
+                Exec("powercfg", "/a", "powercfg.log"); ReportProgress();
+                Exec("tasklist", "", "tasklist.log"); ReportProgress();
+                Exec("wmic", "bios get /all", "bios.log"); ReportProgress();
+                Exec("wmic", "cpu get /all", "cpu.log"); ReportProgress();
+                
+                UpdateStatus("Running systeminfo (may take a while)...");
+                Exec("systeminfo", "", "systeminfo.log"); ReportProgress();
+                
+                Exec("wmic", "timezone get /all", "timezone.log"); ReportProgress();
+                Exec("wmic", "path win32_videocontroller get /all", "graphics.log"); ReportProgress();
+                Exec("wmic", "memorychip get /all", "ram.log"); ReportProgress();
+                Exec("wmic", "diskdrive get /all", "disk.log"); ReportProgress();
+                Exec("wmic", "os get /all", "os.log"); ReportProgress();
+                Exec("wmic", "product get name,version", "installed_software.log"); ReportProgress();
+                Exec("sc", "query", "services.log"); ReportProgress();
+                Exec("driverquery", "/v", "drivers.log"); ReportProgress();
+                Exec("wmic", "logicaldisk get caption,description,providername,volumename,size,freespace", "partitions.log"); ReportProgress();
+                Exec("wmic", "nic get AdapterType,Name,Installed,MACAddress,NetConnectionID,Speed", "network_adapters.log"); ReportProgress();
+                Exec("net", "start", "running_services.log"); ReportProgress();
+                Exec("net", "localgroup", "user_groups.log"); ReportProgress();
+                Exec("wmic", "useraccount get name,sid,status,passwordrequired", "user_accounts.log"); ReportProgress();
+                Exec("wmic", "qfe get hotfixid,description,installedby,installedon", "installed_updates.log"); ReportProgress();
+                Exec("schtasks", "/query /fo LIST /v", "scheduled_tasks.log"); ReportProgress();
+                Exec("wmic", "path Win32_PnPEntity get Caption,DeviceID,Manufacturer,PNPDeviceID", "pnp_devices.log"); ReportProgress();
+                Exec("netsh", "advfirewall show allprofiles", "firewall.log"); ReportProgress();
 
-                // Volume info
-                UpdateStatus("Collecting volume information...");
-                RunAndSaveCommand("cmd.exe", "/c vol", "vol.log");
-                UpdateProgress();
-
-                // IP configuration
-                UpdateStatus("Collecting IP configuration...");
-                RunAndSaveCommand("ipconfig", "/all", "ipconfig.log");
-                RunAndSaveCommand("ipconfig", "/displaydns", "ipconfig_dns.log");
-                UpdateProgress();
-
-                // User info
-                UpdateStatus("Collecting user information...");
-                RunAndSaveCommand("net", "user", "net-user.log");
-                UpdateProgress();
-
-                // File associations
-                UpdateStatus("Collecting file associations...");
-                RunAndSaveCommand("cmd.exe", "/c assoc", "assoc.log");
-                UpdateProgress();
-
-                // Environment variables
-                UpdateStatus("Collecting environment variables...");
-                RunAndSaveCommand("cmd.exe", "/c set", "set.log");
-                UpdateProgress();
-
-                // Compression info
-                UpdateStatus("Collecting compression information...");
-                RunAndSaveCommand("compact", "", "compact.log");
-                UpdateProgress();
-
-                // File types
-                UpdateStatus("Collecting file types...");
-                RunAndSaveCommand("cmd.exe", "/c ftype", "ftype.log");
-                UpdateProgress();
-
-                // Network connections
-                UpdateStatus("Collecting network connections...");
-                RunAndSaveCommand("netstat", "-an", "netstat-an.log");
-                UpdateProgress();
-
-                // Power configuration
-                UpdateStatus("Collecting power configuration...");
-                RunAndSaveCommand("powercfg", "/a", "powercfg.log");
-                UpdateProgress();
-
-                // Process list
-                UpdateStatus("Collecting tasklist...");
-                RunAndSaveCommand("tasklist", "", "tasklist.log");
-                UpdateProgress();
-
-                // BIOS info
-                UpdateStatus("Collecting BIOS information...");
-                RunAndSaveCommand("wmic", "bios get /all", "bios.log");
-                UpdateProgress();
-
-                // CPU info
-                UpdateStatus("Collecting CPU information...");
-                RunAndSaveCommand("wmic", "cpu get /all", "cpu.log");
-                UpdateProgress();
-
-                // System info
-                UpdateStatus("Collecting system information...");
-                RunAndSaveCommand("systeminfo", "", "systeminfo.log");
-                UpdateProgress();
-
-                // Timezone info
-                UpdateStatus("Collecting timezone information...");
-                RunAndSaveCommand("wmic", "timezone get /all", "timezone.log");
-                UpdateProgress();
-
-                // Graphics card info
-                UpdateStatus("Collecting graphics card information...");
-                RunAndSaveCommand("wmic", "path win32_videocontroller get /all", "graphics.log");
-                UpdateProgress();
-
-                // RAM info
-                UpdateStatus("Collecting RAM information...");
-                RunAndSaveCommand("wmic", "memorychip get /all", "ram.log");
-                UpdateProgress();
-
-                // Disk info
-                UpdateStatus("Collecting disk information...");
-                RunAndSaveCommand("wmic", "diskdrive get /all", "disk.log");
-                UpdateProgress();
-
-                // OS info
-                UpdateStatus("Collecting OS information...");
-                RunAndSaveCommand("wmic", "os get /all", "os.log");
-                UpdateProgress();
-
-                // Information about installed programs
-                UpdateStatus("Collecting installed software information...");
-                RunAndSaveCommand("wmic", "product get name,version", "installed_software.log");
-                UpdateProgress();
-
-                // Information about system services
-                UpdateStatus("Collecting system services information...");
-                RunAndSaveCommand("sc", "query", "services.log");
-                UpdateProgress();
-
-                // Information about drivers
-                UpdateStatus("Collecting driver information...");
-                RunAndSaveCommand("driverquery", "/v", "drivers.log");
-                UpdateProgress();
-
-                // Information about disk partitions
-                UpdateStatus("Collecting disk partition information...");
-                RunAndSaveCommand("wmic", "logicaldisk get caption,description,providername,volumename,size,freespace", "partitions.log");
-                UpdateProgress();
-
-                // Information about network interfaces
-                UpdateStatus("Collecting network interface information...");
-                RunAndSaveCommand("wmic", "nic get AdapterType,Name,Installed,MACAddress,NetConnectionID,Speed", "network_adapters.log");
-                UpdateProgress();
-
-                // Information about services launched
-                UpdateStatus("Collecting running services information...");
-                RunAndSaveCommand("net", "start", "running_services.log");
-                UpdateProgress();
-
-                // Information about user groups
-                UpdateStatus("Collecting user groups information...");
-                RunAndSaveCommand("net", "localgroup", "user_groups.log");
-                UpdateProgress();
-
-                // Information about user accounts
-                UpdateStatus("Collecting user accounts information...");
-                RunAndSaveCommand("wmic", "useraccount get name,sid,status,passwordrequired", "user_accounts.log");
-                UpdateProgress();
-
-                // Information about installed updates
-                UpdateStatus("Collecting installed updates information...");
-                RunAndSaveCommand("wmic", "qfe get hotfixid,description,installedby,installedon", "installed_updates.log");
-                UpdateProgress();
-
-                // Information on scheduled tasks
-                UpdateStatus("Collecting scheduled tasks information...");
-                RunAndSaveCommand("schtasks", "/query /fo LIST /v", "scheduled_tasks.log");
-                UpdateProgress();
-
-                // Information about PnP devices
-                UpdateStatus("Collecting PnP devices information...");
-                RunAndSaveCommand("wmic", "path Win32_PnPEntity get Caption,DeviceID,Manufacturer,PNPDeviceID", "pnp_devices.log");
-                UpdateProgress();
-
-                // Information about firewall configuration
-                UpdateStatus("Collecting firewall configuration...");
-                RunAndSaveCommand("netsh", "advfirewall show allprofiles", "firewall.log");
-                UpdateProgress();
-
-                // Generate directory tree if checkbox is checked
-                if (check_tree.Checked)
+                // Tree
+                if (includeTree)
                 {
-                    string treeCommand = "cmd.exe";
-                    string treeArgs = $"/c tree C:\\ /F /A > \"{Path.Combine(outputFolderPath, "directory_tree.log")}\"";
-
-                    Process process = new Process();
-                    process.StartInfo.FileName = treeCommand;
-                    process.StartInfo.Arguments = treeArgs;
-                    process.StartInfo.UseShellExecute = true;
-                    process.StartInfo.CreateNoWindow = true;
-                    process.Start();
-                    process.WaitForExit();
-
-                    string treeFilePath = Path.Combine(outputFolderPath, "directory_tree.log");
-                    if (File.Exists(treeFilePath))
+                    try
                     {
-                        string content = File.ReadAllText(treeFilePath);
-                        SaveLogWithHeader(content, treeFilePath);
+                        UpdateStatus("Generating directory tree...");
+                        string treeFile = Path.Combine(outputFolderPath, "directory_tree.log");
+                        var psi = new ProcessStartInfo("cmd.exe", $"/c tree C:\\ /F /A > \"{treeFile}\"")
+                        {
+                            UseShellExecute = true,
+                            CreateNoWindow = true
+                        };
+                        var p = Process.Start(psi);
+                        p.WaitForExit();
+                        
+                        if (File.Exists(treeFile))
+                        {
+                            string content = File.ReadAllText(treeFile);
+                            SaveLogWithHeader(content, treeFile);
+                        }
+                        else
+                        {
+                            errorsOccurred = true;
+                            string treeError = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Directory tree generation failed:\n" +
+                                             $"  Output file not created: {treeFile}\n" +
+                                             $"  Process exit code: {p.ExitCode}\n" +
+                                             new string('-', 80);
+                            SaveLogWithHeader(treeError, errorFilePath);
+                        }
                     }
+                    catch (Exception treeEx)
+                    {
+                        errorsOccurred = true;
+                        string treeError = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Directory tree exception:\n" +
+                                         $"  Error: {treeEx.GetType().Name} - {treeEx.Message}\n" +
+                                         $"  Stack trace: {treeEx.StackTrace}\n" +
+                                         new string('-', 80);
+                        SaveLogWithHeader(treeError, errorFilePath);
+                    }
+                    ReportProgress();
                 }
-                UpdateProgress();
 
-                // Collect browser data if checkbox is checked
-                if (check_browsers.Checked)
+                // Browsers
+                if (includeBrowsers)
                 {
+                    UpdateStatus("Collecting browser data...");
                     string browserDataPath = Path.Combine(outputFolderPath, "browser_data");
                     Directory.CreateDirectory(browserDataPath);
-
                     StringBuilder browserInfo = new StringBuilder();
 
                     // Chrome
-                    string chromePath = Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                        CHROME_PROFILE_PATH);
-
+                    string chromePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), CHROME_PROFILE_PATH);
                     if (Directory.Exists(chromePath))
                     {
                         browserInfo.AppendLine("Google Chrome:");
-                        browserInfo.AppendLine($"Profile path: {chromePath}");
-
-                        string chromeBackupPath = Path.Combine(browserDataPath, "Chrome_Default");
-                        Directory.CreateDirectory(chromeBackupPath);
-
+                        browserInfo.AppendLine($"  Profile path: {chromePath}");
+                        string chromeBackup = Path.Combine(browserDataPath, "Chrome_Default");
+                        Directory.CreateDirectory(chromeBackup);
+                        
                         try
                         {
-                            string[] filesToCopy = {
-                                "Bookmarks", "Cookies", "History", "Login Data", "Preferences",
-                                "Web Data", "Favicons", "Shortcuts"
-                            };
-
-                            foreach (string file in filesToCopy)
+                            foreach (var file in new[] { "Bookmarks", "Cookies", "History", "Login Data", "Preferences", "Web Data", "Favicons", "Shortcuts" })
                             {
-                                string sourcePath = Path.Combine(chromePath, file);
-                                if (File.Exists(sourcePath))
+                                string src = Path.Combine(chromePath, file);
+                                if (File.Exists(src))
                                 {
-                                    File.Copy(sourcePath, Path.Combine(chromeBackupPath, file), true);
+                                    CopyFileWithRetry(src, Path.Combine(chromeBackup, file));
+                                    browserInfo.AppendLine($"  ✓ {file}");
+                                }
+                                else
+                                {
+                                    browserInfo.AppendLine($"  - {file} (not found)");
                                 }
                             }
-
-                            if (Directory.Exists(Path.Combine(chromePath, "Extensions")))
+                            
+                            string extDir = Path.Combine(chromePath, "Extensions");
+                            if (Directory.Exists(extDir))
                             {
-                                CopyDirectory(Path.Combine(chromePath, "Extensions"),
-                                    Path.Combine(chromeBackupPath, "Extensions"));
+                                CopyDirectory(extDir, Path.Combine(chromeBackup, "Extensions"));
+                                browserInfo.AppendLine($"  ✓ Extensions");
                             }
-
-                            browserInfo.AppendLine("Profile backup created successfully.");
+                                
+                            browserInfo.AppendLine("  Backup completed.");
                         }
-                        catch (Exception ex)
-                        {
-                            browserInfo.AppendLine($"Error backing up Chrome profile: {ex.Message}");
+                        catch (Exception ex) 
+                        { 
+                            errorsOccurred = true;
+                            browserInfo.AppendLine($"  Error: {ex.Message}");
+                            string chromeError = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Chrome backup failed:\n" +
+                                               $"  Profile: {chromePath}\n" +
+                                               $"  Backup: {chromeBackup}\n" +
+                                               $"  Error: {ex.GetType().Name} - {ex.Message}\n" +
+                                               $"  Stack trace: {ex.StackTrace}\n" +
+                                               new string('-', 80);
+                            SaveLogWithHeader(chromeError, errorFilePath);
                         }
-                    }
-
-                    // Firefox
-                    string firefoxPath = Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                        FIREFOX_PROFILE_PATH);
-
-                    if (Directory.Exists(firefoxPath))
-                    {
-                        browserInfo.AppendLine("\nMozilla Firefox:");
-                        browserInfo.AppendLine($"Profiles path: {firefoxPath}");
-
-                        string[] profiles = Directory.GetDirectories(firefoxPath);
-                        foreach (string profile in profiles)
-                        {
-                            string profileName = Path.GetFileName(profile);
-                            browserInfo.AppendLine($"Profile: {profileName}");
-
-                            string firefoxBackupPath = Path.Combine(browserDataPath, "Firefox_" + profileName);
-                            Directory.CreateDirectory(firefoxBackupPath);
-
-                            try
-                            {
-                                string[] filesToCopy = {
-                                    "places.sqlite", "cookies.sqlite", "formhistory.sqlite",
-                                    "logins.json", "key4.db", "prefs.js", "addons.json"
-                                };
-
-                                foreach (string file in filesToCopy)
-                                {
-                                    string sourcePath = Path.Combine(profile, file);
-                                    if (File.Exists(sourcePath))
-                                    {
-                                        File.Copy(sourcePath, Path.Combine(firefoxBackupPath, file), true);
-                                    }
-                                }
-
-                                browserInfo.AppendLine("Profile backup created successfully.");
-                            }
-                            catch (Exception ex)
-                            {
-                                browserInfo.AppendLine($"Error backing up Firefox profile: {ex.Message}");
-                            }
-                        }
-                    }
-
-                    // Edge
-                    string edgePath = Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                        EDGE_PROFILE_PATH);
-
-                    if (Directory.Exists(edgePath))
-                    {
-                        browserInfo.AppendLine("\nMicrosoft Edge:");
-                        browserInfo.AppendLine($"Profile path: {edgePath}");
-
-                        string edgeBackupPath = Path.Combine(browserDataPath, "Edge_Default");
-                        Directory.CreateDirectory(edgeBackupPath);
-
-                        try
-                        {
-                            string[] filesToCopy = {
-                                "Bookmarks", "Cookies", "History", "Login Data", "Preferences",
-                                "Web Data", "Favicons", "Shortcuts"
-                            };
-
-                            foreach (string file in filesToCopy)
-                            {
-                                string sourcePath = Path.Combine(edgePath, file);
-                                if (File.Exists(sourcePath))
-                                {
-                                    File.Copy(sourcePath, Path.Combine(edgeBackupPath, file), true);
-                                }
-                            }
-
-                            if (Directory.Exists(Path.Combine(edgePath, "Extensions")))
-                            {
-                                CopyDirectory(Path.Combine(edgePath, "Extensions"),
-                                    Path.Combine(edgeBackupPath, "Extensions"));
-                            }
-
-                            browserInfo.AppendLine("Profile backup created successfully.");
-                        }
-                        catch (Exception ex)
-                        {
-                            browserInfo.AppendLine($"Error backing up Edge profile: {ex.Message}");
-                        }
-                    }
-
-                    SaveLogWithHeader(browserInfo.ToString(), Path.Combine(browserDataPath, "browser_profiles.log"));
-                }
-                UpdateProgress();
-
-                // Compress folder if checkbox is checked
-                if (check_makezip.Checked)
-                {
-                    string sevenZipPath = Path.Combine(Application.StartupPath, SEVEN_ZIP_EXE);
-
-                    if (File.Exists(sevenZipPath))
-                    {
-                        string zipPath = outputFolderPath + ".zip";
-
-                        ProcessStartInfo processInfo = new ProcessStartInfo();
-                        processInfo.FileName = sevenZipPath;
-                        processInfo.Arguments = $"a -tzip \"{zipPath}\" \"{outputFolderPath}\\*\"";
-                        processInfo.WindowStyle = ProcessWindowStyle.Hidden;
-
-                        Process process = Process.Start(processInfo);
-                        process.WaitForExit();
                     }
                     else
                     {
-                        SaveLogWithHeader("7z.exe not found in application directory. Compression was not performed.",
-                            Path.Combine(outputFolderPath, COMPRESSION_ERROR_LOG));
+                        browserInfo.AppendLine("Google Chrome: Not installed or profile not found");
+                        browserInfo.AppendLine($"  Expected path: {chromePath}");
                     }
+
+                    // Firefox
+                    string firefoxPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), FIREFOX_PROFILE_PATH);
+                    if (Directory.Exists(firefoxPath))
+                    {
+                        browserInfo.AppendLine("\nMozilla Firefox:");
+                        browserInfo.AppendLine($"  Profiles path: {firefoxPath}");
+                        foreach (string profile in Directory.GetDirectories(firefoxPath))
+                        {
+                            string profileName = Path.GetFileName(profile);
+                            browserInfo.AppendLine($"  Profile: {profileName}");
+                            string firefoxBackup = Path.Combine(browserDataPath, "Firefox_" + profileName);
+                            Directory.CreateDirectory(firefoxBackup);
+                            
+                            try
+                            {
+                                foreach (var file in new[] { "places.sqlite", "cookies.sqlite", "formhistory.sqlite", "logins.json", "key4.db", "prefs.js", "addons.json" })
+                                {
+                                    string src = Path.Combine(profile, file);
+                                    if (File.Exists(src))
+                                    {
+                                        CopyFileWithRetry(src, Path.Combine(firefoxBackup, file));
+                                        browserInfo.AppendLine($"    ✓ {file}");
+                                    }
+                                    else
+                                    {
+                                        browserInfo.AppendLine($"    - {file} (not found)");
+                                    }
+                                }
+                                browserInfo.AppendLine($"  {profileName}: Backup completed.");
+                            }
+                            catch (Exception ex) 
+                            { 
+                                errorsOccurred = true;
+                                browserInfo.AppendLine($"  {profileName}: Error - {ex.Message}");
+                                string ffError = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Firefox backup failed:\n" +
+                                               $"  Profile: {profile}\n" +
+                                               $"  Backup: {firefoxBackup}\n" +
+                                               $"  Error: {ex.GetType().Name} - {ex.Message}\n" +
+                                               $"  Stack trace: {ex.StackTrace}\n" +
+                                               new string('-', 80);
+                                SaveLogWithHeader(ffError, errorFilePath);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        browserInfo.AppendLine("\nMozilla Firefox: Not installed or profile not found");
+                        browserInfo.AppendLine($"  Expected path: {firefoxPath}");
+                    }
+
+                    // Edge
+                    string edgePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), EDGE_PROFILE_PATH);
+                    if (Directory.Exists(edgePath))
+                    {
+                        browserInfo.AppendLine("\nMicrosoft Edge:");
+                        browserInfo.AppendLine($"  Profile path: {edgePath}");
+                        string edgeBackup = Path.Combine(browserDataPath, "Edge_Default");
+                        Directory.CreateDirectory(edgeBackup);
+                        
+                        try
+                        {
+                            foreach (var file in new[] { "Bookmarks", "Cookies", "History", "Login Data", "Preferences", "Web Data", "Favicons", "Shortcuts" })
+                            {
+                                string src = Path.Combine(edgePath, file);
+                                if (File.Exists(src))
+                                {
+                                    CopyFileWithRetry(src, Path.Combine(edgeBackup, file));
+                                    browserInfo.AppendLine($"  ✓ {file}");
+                                }
+                                else
+                                {
+                                    browserInfo.AppendLine($"  - {file} (not found)");
+                                }
+                            }
+                            
+                            string extDir = Path.Combine(edgePath, "Extensions");
+                            if (Directory.Exists(extDir))
+                            {
+                                CopyDirectory(extDir, Path.Combine(edgeBackup, "Extensions"));
+                                browserInfo.AppendLine($"  ✓ Extensions");
+                            }
+                                
+                            browserInfo.AppendLine("  Backup completed.");
+                        }
+                        catch (Exception ex) 
+                        { 
+                            errorsOccurred = true;
+                            browserInfo.AppendLine($"  Error: {ex.Message}");
+                            string edgeError = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Edge backup failed:\n" +
+                                             $"  Profile: {edgePath}\n" +
+                                             $"  Backup: {edgeBackup}\n" +
+                                             $"  Error: {ex.GetType().Name} - {ex.Message}\n" +
+                                             $"  Stack trace: {ex.StackTrace}\n" +
+                                             new string('-', 80);
+                            SaveLogWithHeader(edgeError, errorFilePath);
+                        }
+                    }
+                    else
+                    {
+                        browserInfo.AppendLine("\nMicrosoft Edge: Not installed or profile not found");
+                        browserInfo.AppendLine($"  Expected path: {edgePath}");
+                    }
+
+                    SaveLogWithHeader(browserInfo.ToString(), Path.Combine(browserDataPath, "browser_profiles.log"));
+                    ReportProgress();
                 }
-                UpdateProgress();
+
+                // Compression
+                if (includeZip)
+                {
+                    UpdateStatus("Compressing to ZIP...");
+                    string zipPath = outputFolderPath + ".zip";
+                    
+                    try
+                    {
+                        // If ZIP exists, create with unique timestamp instead of deleting
+                        if (File.Exists(zipPath))
+                        {
+                            zipPath = outputFolderPath + $"_{DateTime.Now:HHmmss}.zip";
+                        }
+                        
+                        ZipFile.CreateFromDirectory(outputFolderPath, zipPath, CompressionLevel.Optimal, false);
+                        UpdateStatus($"ZIP created: {Path.GetFileName(zipPath)}");
+                    }
+                    catch (Exception zipEx)
+                    {
+                        errorsOccurred = true;
+                        string zipError = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] ZIP compression failed:\n" +
+                                        $"  ZIP path: {zipPath}\n" +
+                                        $"  ZIP exists: {File.Exists(zipPath)}\n" +
+                                        $"  Source folder: {outputFolderPath}\n" +
+                                        $"  Source exists: {Directory.Exists(outputFolderPath)}\n" +
+                                        $"  Error: {zipEx.GetType().Name} - {zipEx.Message}\n" +
+                                        $"  Stack trace: {zipEx.StackTrace}\n";
+                        
+                        string sevenZipPath = Path.Combine(Application.StartupPath, SEVEN_ZIP_EXE);
+                        if (File.Exists(sevenZipPath))
+                        {
+                            zipError += $"  Trying 7z.exe fallback: {sevenZipPath}\n";
+                            try
+                            {
+                                var psi = new ProcessStartInfo(sevenZipPath, $"a -tzip \"{zipPath}\" \"{outputFolderPath}\\*\"")
+                                {
+                                    WindowStyle = ProcessWindowStyle.Hidden
+                                };
+                                var p = Process.Start(psi);
+                                p.WaitForExit();
+                                zipError += $"  7z.exe exit code: {p.ExitCode}\n";
+                            }
+                            catch (Exception ex7z)
+                            {
+                                zipError += $"  7z.exe also failed: {ex7z.Message}\n";
+                            }
+                        }
+                        else
+                        {
+                            zipError += $"  7z.exe not found at: {sevenZipPath}\n";
+                        }
+                        
+                        zipError += new string('-', 80);
+                        SaveLogWithHeader(zipError, errorFilePath);
+                    }
+                    ReportProgress();
+                }
+                
+                UpdateStatus("Completed!");
             }
             catch (Exception ex)
             {
-                SaveLogWithHeader($"Error during data collection: {ex.Message}",
-                    Path.Combine(outputFolderPath, "ERROR.log"));
+                errorsOccurred = true;
+                string criticalError = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] CRITICAL ERROR in CollectData:\n" +
+                                      $"  Error type: {ex.GetType().Name}\n" +
+                                      $"  Message: {ex.Message}\n" +
+                                      $"  Stack trace:\n{ex.StackTrace}\n" +
+                                      $"  Output folder: {outputFolderPath}\n";
+                
+                if (ex.InnerException != null)
+                {
+                    criticalError += $"  Inner exception: {ex.InnerException.GetType().Name}\n" +
+                                   $"  Inner message: {ex.InnerException.Message}\n";
+                }
+                
+                criticalError += new string('=', 80);
+                
+                SaveLogWithHeader(criticalError, errorFilePath);
+                UpdateStatus($"Critical error: {ex.Message}");
             }
         }
 

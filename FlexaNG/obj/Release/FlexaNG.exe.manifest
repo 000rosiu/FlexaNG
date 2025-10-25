@@ -43,14 +43,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="FlexaNG.exe" size="438784">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="FlexaNG.exe" size="444416">
       <assemblyIdentity name="FlexaNG" version="0.1.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>Za9Oba0GL1Cr5VsUFzGYuam+kFVwOwAHuGjCZSzYOYI=</dsig:DigestValue>
+        <dsig:DigestValue>u/6LXoGKcdy5u+2WX/kMpGvliZsGe0d51iD5E4RYI54=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

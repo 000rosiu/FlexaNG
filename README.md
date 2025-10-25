@@ -68,11 +68,6 @@ FlexaNG is designed with privacy in mind:
 - No data is transmitted over the internet
 - The application is completely transparent about what information it collects
 - Due to the device's deep information gathering, antivirus programs may incorrectly detect this program as spyware/stealer. 
-- Link to Triage analysis showing the full operation of the program and why it is detected as spyware/stealer:
-
-[Triage analysis page](https://tria.ge/250427-jrxatawvhw/behavioral1)
-|
-[Triage analysis report in PDF](https://verti.eu.org/wp-content/uploads/2025/04/triage_analysis_flexang.pdf)
 
 ## 📝 License
 
